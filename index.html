@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time's Up en ligne</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Time's Up en ligne</h1>
+
+        <input id="newWord" placeholder="Entrez un mot">
+        <button onclick="addWord()">Ajouter le mot</button>
+        <button onclick="drawWord()">🎯 Tirer un mot</button>
+
+        <h2>Mot tiré : <span id="randomWord"></span></h2>
+
+        <h3>Liste des mots (restants)</h3>
+        <ul id="wordList"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
