@@ -12,11 +12,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+let currentWord = null;
+
 function addWord() {
   const word = document.getElementById("newWord").value.trim();
   if (word) {
     db.collection("words").add({ word });
     document.getElementById("newWord").value = "";
+    alert("Mot ajouté !");
   }
 }
 
@@ -25,19 +28,26 @@ async function drawWord() {
   const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   if (words.length > 0) {
     const random = words[Math.floor(Math.random() * words.length)];
+    currentWord = random;
     document.getElementById("randomWord").innerText = random.word;
-    db.collection("words").doc(random.id).delete();
+    document.getElementById("validationButtons").style.display = "block";
   } else {
     document.getElementById("randomWord").innerText = "Plus de mots !";
+    document.getElementById("validationButtons").style.display = "none";
   }
 }
 
-db.collection("words").onSnapshot(snapshot => {
-  const list = document.getElementById("wordList");
-  list.innerHTML = "";
-  snapshot.forEach(doc => {
-    const li = document.createElement("li");
-    li.textContent = doc.data().word;
-    list.appendChild(li);
-  });
-});
+function validateWord(found) {
+  if (currentWord) {
+    if (found) {
+      // Si trouvé, on supprime de la base
+      db.collection("words").doc(currentWord.id).delete();
+    } 
+    // Si pas trouvé, on ne fait rien : le mot reste dans la base
+
+    // Réinitialisation
+    currentWord = null;
+    document.getElementById("randomWord").innerText = "";
+    document.getElementById("validationButtons").style.display = "none";
+  }
+}
