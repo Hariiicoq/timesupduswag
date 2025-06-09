@@ -72,8 +72,10 @@ async function drawWord() {
 
     const pendingIds = new Set(pendingWords.map(w => w.id));
 
-    // Exclure aussi les mots déjà trouvés
-    const availableWords = allWords.filter(w => !pendingIds.has(w.id) && !foundWordIds.has(w.id));
+    // Filtrer mots exclus
+    const availableWords = allWords.filter(
+        w => !pendingIds.has(w.id) && !foundWordIds.has(w.id)
+    );
 
     if (availableWords.length > 0) {
         const random = availableWords[Math.floor(Math.random() * availableWords.length)];
@@ -108,10 +110,11 @@ function validatePendingWord(index, found) {
 
     if (found && currentTeam) {
         changeScore(1);
-        db.collection("words").doc(wordObj.id).delete(); // supprime dans Firestore
-        foundWordIds.add(wordObj.id); // mémorise le mot comme trouvé
+        db.collection("words").doc(wordObj.id).delete();
+        foundWordIds.add(wordObj.id);
     }
 
+    // Supprime le mot de la liste à valider (quel que soit le cas)
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
