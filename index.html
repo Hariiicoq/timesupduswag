@@ -3,17 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time's Up en ligne</title>
+    <title>Time's Up Équipes</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <!-- ... dans <body> -->
     <div class="container">
-        <h1>🎲 Time's Up</h1>
+        <h1>🎲 Time's Up - Équipes</h1>
 
-        <h3>Points : <span id="score">0</span></h3>
+        <div class="teams">
+            <h3>Choisis ton équipe :</h3>
+            <div id="teamButtons">
+                <button onclick="selectTeam('Rouge')">🔴 Rouge</button>
+                <button onclick="selectTeam('Bleu')">🔵 Bleu</button>
+                <button onclick="selectTeam('Vert')">🟢 Vert</button>
+                <button onclick="selectTeam('Jaune')">🟡 Jaune</button>
+                <button onclick="selectTeam('Violet')">🟣 Violet</button>
+            </div>
+            <p>Équipe actuelle : <strong id="currentTeam">Aucune</strong></p>
+        </div>
+
+        <h3>
+            Score :
+            <button onclick="changeScore(-1)">➖</button>
+            <span id="score">0</span>
+            <button onclick="changeScore(1)">➕</button>
+        </h3>
 
         <input id="newWord" placeholder="Entrez un mot">
         <button onclick="addWord()">Ajouter</button>
@@ -21,15 +37,12 @@
         <hr>
 
         <button onclick="drawWord()">🎯 Tirer un mot</button>
-
         <h2>Mot tiré : <span id="randomWord"></span></h2>
 
         <div id="validationButtons" style="display: none;">
             <button onclick="validateWord(true)">✅ Trouvé</button>
             <button onclick="validateWord(false)">🔄 Pas trouvé</button>
         </div>
-    </div>
-
     </div>
 
     <script src="script.js"></script>

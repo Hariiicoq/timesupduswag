@@ -13,7 +13,34 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let currentWord = null;
-let score = 0;
+let currentTeam = null;
+let teamScores = {
+    Rouge: 0,
+    Bleu: 0,
+    Vert: 0,
+    Jaune: 0,
+    Violet: 0
+};
+
+function selectTeam(teamName) {
+    currentTeam = teamName;
+    document.getElementById("currentTeam").innerText = teamName;
+    updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    const score = teamScores[currentTeam] || 0;
+    document.getElementById("score").innerText = score;
+}
+
+function changeScore(value) {
+    if (!currentTeam) {
+        alert("Choisis d'abord une équipe !");
+        return;
+    }
+    teamScores[currentTeam] = Math.max(0, (teamScores[currentTeam] || 0) + value);
+    updateScoreDisplay();
+}
 
 function addWord() {
     const word = document.getElementById("newWord").value.trim();
@@ -39,14 +66,16 @@ async function drawWord() {
 }
 
 function validateWord(found) {
+    if (!currentTeam) {
+        alert("Sélectionne une équipe avant de valider !");
+        return;
+    }
+
     if (currentWord) {
         if (found) {
             db.collection("words").doc(currentWord.id).delete();
-            score++;
-            document.getElementById("score").innerText = score;
+            changeScore(1);
         }
-
-        // Réinitialisation
         currentWord = null;
         document.getElementById("randomWord").innerText = "";
         document.getElementById("validationButtons").style.display = "none";
