@@ -9,6 +9,14 @@ const firebaseConfig = {
   measurementId: "G-CTDLHPF0FF"
 };
 
+firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+firebase.firestore().disableNetwork(); // désactive le cache
+firebase.firestore().enableNetwork();  // reforce la connexion live
+firebase.firestore().enablePersistence()
+    .catch(function (err) {
+        console.error("Erreur de persistence Firestore :", err.code);
+    });
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -24,11 +32,7 @@ let teamScores = {
     Violet: 0
 };
 
-let pendingWords = [
-    { id: '1', word: 'Pomme' },
-    { id: '2', word: 'Chat' },
-    { id: '3', word: 'Ordinateur' }
-];
+let pendingWords = [];
 
 function selectTeam(teamName) {
     currentTeam = teamName;
@@ -101,27 +105,33 @@ function renderPendingWords() {
     pendingWords.forEach((wordObj) => {
         const li = document.createElement("li");
         li.innerHTML = `
-      ${wordObj.word}
-      <button onclick="validatePendingWordById('${wordObj.id}', true)">✅</button>
-      <button onclick="validatePendingWordById('${wordObj.id}', false)">🔄</button>
-    `;
+          ${wordObj.word}
+          <button onclick="validatePendingWordById('${wordObj.id}', true)">✅</button>
+          <button onclick="validatePendingWordById('${wordObj.id}', false)">🔄</button>
+        `;
         list.appendChild(li);
     });
 }
 
 function validatePendingWordById(id, found) {
     const index = pendingWords.findIndex(w => w.id === id);
-    if (index === -1) return; // pas trouvé
+    if (index === -1) return;
 
     const wordObj = pendingWords[index];
+    console.log('Suppression demandée pour:', wordObj.id, wordObj.word);
 
     if (found && currentTeam) {
         changeScore(1);
-        db.collection("words").doc(wordObj.id).delete();
-        foundWordIds.add(wordObj.id);
+        db.collection("words").doc(wordObj.id).delete()
+            .then(() => {
+                console.log(`Mot supprimé: ${wordObj.word}`);
+                foundWordIds.add(wordObj.id);
+            })
+            .catch(error => {
+                console.error("Erreur suppression mot:", error);
+            });
     }
 
-    // Suppression du mot de la liste
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
