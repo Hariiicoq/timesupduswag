@@ -1,4 +1,4 @@
-// Remplace ceci par tes infos Firebase
+ï»¿// Remplace ceci par tes infos Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCJAh3RTo9Lay1DY4kDrx7x-zzCzyGAzdo",
   authDomain: "timesup-36197.firebaseapp.com",
@@ -21,6 +21,7 @@ let teamScores = {
     Jaune: 0,
     Violet: 0
 };
+let pendingWords = []; // mots Ã  valider
 
 function selectTeam(teamName) {
     currentTeam = teamName;
@@ -37,7 +38,7 @@ function updateScoreDisplay() {
 function renderAllScores() {
     const container = document.getElementById("allScores");
     container.innerHTML = `
-    <h4>Scores des équipes :</h4>
+    <h4>Scores des Ã©quipes :</h4>
     <ul style="list-style: none; padding: 0;">
       ${Object.entries(teamScores)
             .map(([team, score]) => `<li><strong>${team}:</strong> ${score}</li>`)
@@ -48,7 +49,7 @@ function renderAllScores() {
 
 function changeScore(value) {
     if (!currentTeam) {
-        alert("Choisis d'abord une équipe !");
+        alert("Choisis d'abord une Ã©quipe !");
         return;
     }
     teamScores[currentTeam] = Math.max(0, (teamScores[currentTeam] || 0) + value);
@@ -60,42 +61,59 @@ function addWord() {
     if (word) {
         db.collection("words").add({ word });
         document.getElementById("newWord").value = "";
-        // alert supprimée
     }
 }
 
 async function drawWord() {
+    if (currentWord) {
+        // Ajoute le mot en cours Ã  la liste Ã  valider
+        pendingWords.push(currentWord);
+        renderPendingWords();
+    }
+
     const snapshot = await db.collection("words").get();
     const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     if (words.length > 0) {
         const random = words[Math.floor(Math.random() * words.length)];
         currentWord = random;
         document.getElementById("randomWord").innerText = random.word;
-        document.getElementById("validationButtons").style.display = "block";
     } else {
-        document.getElementById("randomWord").innerText = "Plus de mots !";
-        document.getElementById("validationButtons").style.display = "none";
-    }
-}
-
-function validateWord(found) {
-    if (!currentTeam) {
-        alert("Sélectionne une équipe avant de valider !");
-        return;
-    }
-
-    if (currentWord) {
-        if (found) {
-            db.collection("words").doc(currentWord.id).delete();
-            changeScore(1);
-        }
         currentWord = null;
-        document.getElementById("randomWord").innerText = "";
-        document.getElementById("validationButtons").style.display = "none";
+        document.getElementById("randomWord").innerText = "Plus de mots !";
     }
 }
 
-// Afficher les scores dès le début
+function renderPendingWords() {
+    const list = document.getElementById("pendingWords");
+    list.innerHTML = "";
+
+    pendingWords.forEach((wordObj, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+      ${wordObj.word}
+      <button onclick="validatePendingWord(${index}, true)">âœ…</button>
+      <button onclick="validatePendingWord(${index}, false)">ðŸ”„</button>
+    `;
+        list.appendChild(li);
+    });
+}
+
+function validatePendingWord(index, found) {
+    const wordObj = pendingWords[index];
+    if (!wordObj) return;
+
+    if (found && currentTeam) {
+        changeScore(1);
+    }
+
+    // Supprime de Firestore
+    db.collection("words").doc(wordObj.id).delete();
+
+    // Retire du tableau
+    pendingWords.splice(index, 1);
+    renderPendingWords();
+}
+
 window.onload = () => {
     renderAllScores();
 };
