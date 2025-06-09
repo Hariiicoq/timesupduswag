@@ -9,10 +9,6 @@ const firebaseConfig = {
   measurementId: "G-CTDLHPF0FF"
 };
 
-firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-firebase.firestore().disableNetwork(); // désactive le cache
-firebase.firestore().enableNetwork();  // reforce la connexion live
-firebase.firestore().enablePersistence()
     .catch(function (err) {
         console.error("Erreur de persistence Firestore :", err.code);
     });
@@ -20,6 +16,10 @@ firebase.firestore().enablePersistence()
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+firebase.firestore().disableNetwork(); // désactive le cache
+firebase.firestore().enableNetwork();  // reforce la connexion live
+firebase.firestore().enablePersistence()
 
 const foundWordIds = new Set();
 let currentWord = null;
