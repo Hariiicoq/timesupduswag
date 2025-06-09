@@ -12,6 +12,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+
+const foundWordIds = new Set();
 let currentWord = null;
 let currentTeam = null;
 let teamScores = {
@@ -69,15 +71,15 @@ async function drawWord() {
     const allWords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const pendingIds = new Set(pendingWords.map(w => w.id));
-    const availableWords = allWords.filter(w => !pendingIds.has(w.id));
+
+    // Exclure aussi les mots déjà trouvés
+    const availableWords = allWords.filter(w => !pendingIds.has(w.id) && !foundWordIds.has(w.id));
 
     if (availableWords.length > 0) {
         const random = availableWords[Math.floor(Math.random() * availableWords.length)];
         pendingWords.push(random);
         renderPendingWords();
         currentWord = random;
-
-        // Afficher le mot tiré en grand
         document.getElementById("randomWord").innerText = random.word;
     } else {
         document.getElementById("randomWord").innerText = "Plus de mots disponibles !";
@@ -106,10 +108,10 @@ function validatePendingWord(index, found) {
 
     if (found && currentTeam) {
         changeScore(1);
-        db.collection("words").doc(wordObj.id).delete(); // supprimer seulement si trouvé
+        db.collection("words").doc(wordObj.id).delete(); // supprime dans Firestore
+        foundWordIds.add(wordObj.id); // mémorise le mot comme trouvé
     }
 
-    // Sinon (pas trouvé), on ne le supprime pas → il pourra être re-tiré
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
