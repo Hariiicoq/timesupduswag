@@ -9,8 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+    <!-- ... dans <body> -->
     <div class="container">
         <h1>🎲 Time's Up</h1>
+
+        <h3>Points : <span id="score">0</span></h3>
 
         <input id="newWord" placeholder="Entrez un mot">
         <button onclick="addWord()">Ajouter</button>
@@ -25,6 +28,8 @@
             <button onclick="validateWord(true)">✅ Trouvé</button>
             <button onclick="validateWord(false)">🔄 Pas trouvé</button>
         </div>
+    </div>
+
     </div>
 
     <script src="script.js"></script>

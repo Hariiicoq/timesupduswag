@@ -13,41 +13,42 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let currentWord = null;
+let score = 0;
 
 function addWord() {
-  const word = document.getElementById("newWord").value.trim();
-  if (word) {
-    db.collection("words").add({ word });
-    document.getElementById("newWord").value = "";
-    alert("Mot ajouté !");
-  }
+    const word = document.getElementById("newWord").value.trim();
+    if (word) {
+        db.collection("words").add({ word });
+        document.getElementById("newWord").value = "";
+        alert("Mot ajouté !");
+    }
 }
 
 async function drawWord() {
-  const snapshot = await db.collection("words").get();
-  const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  if (words.length > 0) {
-    const random = words[Math.floor(Math.random() * words.length)];
-    currentWord = random;
-    document.getElementById("randomWord").innerText = random.word;
-    document.getElementById("validationButtons").style.display = "block";
-  } else {
-    document.getElementById("randomWord").innerText = "Plus de mots !";
-    document.getElementById("validationButtons").style.display = "none";
-  }
+    const snapshot = await db.collection("words").get();
+    const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (words.length > 0) {
+        const random = words[Math.floor(Math.random() * words.length)];
+        currentWord = random;
+        document.getElementById("randomWord").innerText = random.word;
+        document.getElementById("validationButtons").style.display = "block";
+    } else {
+        document.getElementById("randomWord").innerText = "Plus de mots !";
+        document.getElementById("validationButtons").style.display = "none";
+    }
 }
 
 function validateWord(found) {
-  if (currentWord) {
-    if (found) {
-      // Si trouvé, on supprime de la base
-      db.collection("words").doc(currentWord.id).delete();
-    } 
-    // Si pas trouvé, on ne fait rien : le mot reste dans la base
+    if (currentWord) {
+        if (found) {
+            db.collection("words").doc(currentWord.id).delete();
+            score++;
+            document.getElementById("score").innerText = score;
+        }
 
-    // Réinitialisation
-    currentWord = null;
-    document.getElementById("randomWord").innerText = "";
-    document.getElementById("validationButtons").style.display = "none";
-  }
+        // Réinitialisation
+        currentWord = null;
+        document.getElementById("randomWord").innerText = "";
+        document.getElementById("validationButtons").style.display = "none";
+    }
 }
