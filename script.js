@@ -9,17 +9,15 @@ const firebaseConfig = {
   measurementId: "G-CTDLHPF0FF"
 };
 
-    .catch(function (err) {
-        console.error("Erreur de persistence Firestore :", err.code);
-    });
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
 firebase.firestore().disableNetwork(); // désactive le cache
 firebase.firestore().enableNetwork();  // reforce la connexion live
-firebase.firestore().enablePersistence()
+firebase.firestore().enablePersistence().catch(function (err) {
+    console.error("Erreur de persistence Firestore :", err.code);
+});
 
 const foundWordIds = new Set();
 let currentWord = null;
