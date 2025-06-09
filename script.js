@@ -104,16 +104,10 @@ function validatePendingWord(index, found) {
 
     if (found && currentTeam) {
         changeScore(1);
+        db.collection("words").doc(wordObj.id).delete(); // supprimer seulement si trouvé
     }
 
-    // Supprime de Firestore
-    db.collection("words").doc(wordObj.id).delete();
-
-    // Retire du tableau
+    // Sinon (pas trouvé), on ne le supprime pas → il pourra être re-tiré
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
-
-window.onload = () => {
-    renderAllScores();
-};
