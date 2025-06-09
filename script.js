@@ -13,31 +13,35 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 
-const foundWordIds = new Set();
-let currentWord = null;
 let currentTeam = null;
-let teamScores = {
+let currentWord = null;
+let pendingWords = [];
+const teamScores = {
     Rouge: 0,
     Bleu: 0,
     Vert: 0,
     Jaune: 0,
-    Violet: 0
+    Violet: 0,
 };
-let pendingWords = []; // mots à valider
+const foundWordIds = new Set(); // IDs des mots validés trouvés
 
-function selectTeam(teamName) {
-    currentTeam = teamName;
-    document.getElementById("currentTeam").innerText = teamName;
-    updateScoreDisplay();
+// Sélection d'équipe
+function selectTeam(team) {
+    currentTeam = team;
+    renderScores();
 }
 
-function updateScoreDisplay() {
-    const score = teamScores[currentTeam] || 0;
-    document.getElementById("score").innerText = score;
-    renderAllScores();
+// Changer score équipe courante
+function changeScore(value) {
+    if (currentTeam) {
+        teamScores[currentTeam] += value;
+        if (teamScores[currentTeam] < 0) teamScores[currentTeam] = 0;
+        renderScores();
+    }
 }
 
-function renderAllScores() {
+// Afficher les scores horizontalement
+function renderScores() {
     const container = document.getElementById("allScores");
     container.innerHTML = `
     <h4>Scores des équipes :</h4>
@@ -49,30 +53,59 @@ function renderAllScores() {
   `;
 }
 
-function changeScore(value) {
-    if (!currentTeam) {
-        alert("Choisis d'abord une équipe !");
-        return;
-    }
-    teamScores[currentTeam] = Math.max(0, (teamScores[currentTeam] || 0) + value);
-    updateScoreDisplay();
+// Afficher les équipes pour sélection
+function renderTeams() {
+    const container = document.getElementById("teams");
+    container.innerHTML = Object.keys(teamScores)
+        .map(
+            (team) =>
+                `<button onclick="selectTeam('${team}')" style="margin: 3px; ${currentTeam === team ? "font-weight:bold;" : ""
+                }">${team}</button>`
+        )
+        .join("");
 }
 
-function addWord() {
-    const word = document.getElementById("newWord").value.trim();
-    if (word) {
-        db.collection("words").add({ word });
-        document.getElementById("newWord").value = "";
-    }
+// Rendu de l’historique des mots à valider
+function renderPendingWords() {
+    const container = document.getElementById("pendingWords");
+    container.innerHTML = pendingWords
+        .map(
+            (wordObj, index) => `
+      <div style="margin-bottom:5px;">
+        ${wordObj.word} 
+        <button onclick="validatePendingWord(${index}, true)">Trouvé</button> 
+        <button onclick="validatePendingWord(${index}, false)">Pas trouvé</button>
+      </div>`
+        )
+        .join("");
 }
 
+// Valider mot dans l'historique
+function validatePendingWord(index, found) {
+    const wordObj = pendingWords[index];
+    if (!wordObj) return;
+
+    if (found && currentTeam) {
+        changeScore(1);
+        // Supprime le mot de Firestore
+        db.collection("words").doc(wordObj.id).delete();
+        // Enregistre comme mot trouvé
+        foundWordIds.add(wordObj.id);
+    }
+
+    // Retire le mot de l'historique dans tous les cas
+    pendingWords.splice(index, 1);
+    renderPendingWords();
+}
+
+// Tirer un mot aléatoire disponible (ni déjà tiré ni validé)
 async function drawWord() {
     const snapshot = await db.collection("words").get();
     const allWords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const pendingIds = new Set(pendingWords.map(w => w.id));
 
-    // Filtrer mots exclus
+    // Mots disponibles = pas dans historique ni trouvés
     const availableWords = allWords.filter(
         w => !pendingIds.has(w.id) && !foundWordIds.has(w.id)
     );
@@ -89,32 +122,10 @@ async function drawWord() {
     }
 }
 
-function renderPendingWords() {
-    const list = document.getElementById("pendingWords");
-    list.innerHTML = "";
-
-    pendingWords.forEach((wordObj, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-      ${wordObj.word}
-      <button onclick="validatePendingWord(${index}, true)">✅</button>
-      <button onclick="validatePendingWord(${index}, false)">🔄</button>
-    `;
-        list.appendChild(li);
-    });
-}
-
-function validatePendingWord(index, found) {
-    const wordObj = pendingWords[index];
-    if (!wordObj) return;
-
-    if (found && currentTeam) {
-        changeScore(1);
-        db.collection("words").doc(wordObj.id).delete();
-        foundWordIds.add(wordObj.id);
-    }
-
-    // Supprime le mot de la liste à valider (quel que soit le cas)
-    pendingWords.splice(index, 1);
+// Initialisation simple au chargement
+window.onload = () => {
+    renderTeams();
+    renderScores();
     renderPendingWords();
-}
+    document.getElementById("randomWord").innerText = "";
+};
