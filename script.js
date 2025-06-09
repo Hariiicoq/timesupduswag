@@ -68,7 +68,6 @@ async function drawWord() {
     const snapshot = await db.collection("words").get();
     const allWords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Filtrer pour ne garder que les mots qui ne sont pas déjà dans pendingWords
     const pendingIds = new Set(pendingWords.map(w => w.id));
     const availableWords = allWords.filter(w => !pendingIds.has(w.id));
 
@@ -76,10 +75,13 @@ async function drawWord() {
         const random = availableWords[Math.floor(Math.random() * availableWords.length)];
         pendingWords.push(random);
         renderPendingWords();
-        document.getElementById("randomWord").innerText = ""; // plus de mot en haut
-        currentWord = null;
+        currentWord = random;
+
+        // Afficher le mot tiré en grand
+        document.getElementById("randomWord").innerText = random.word;
     } else {
         document.getElementById("randomWord").innerText = "Plus de mots disponibles !";
+        currentWord = null;
     }
 }
 
