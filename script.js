@@ -31,6 +31,19 @@ function selectTeam(teamName) {
 function updateScoreDisplay() {
     const score = teamScores[currentTeam] || 0;
     document.getElementById("score").innerText = score;
+    renderAllScores();
+}
+
+function renderAllScores() {
+    const container = document.getElementById("allScores");
+    container.innerHTML = `
+    <h4>Scores des équipes :</h4>
+    <ul style="list-style: none; padding: 0;">
+      ${Object.entries(teamScores)
+            .map(([team, score]) => `<li><strong>${team}:</strong> ${score}</li>`)
+            .join("")}
+    </ul>
+  `;
 }
 
 function changeScore(value) {
@@ -47,7 +60,7 @@ function addWord() {
     if (word) {
         db.collection("words").add({ word });
         document.getElementById("newWord").value = "";
-        alert("Mot ajouté !");
+        // alert supprimée
     }
 }
 
@@ -81,3 +94,8 @@ function validateWord(found) {
         document.getElementById("validationButtons").style.display = "none";
     }
 }
+
+// Afficher les scores dès le début
+window.onload = () => {
+    renderAllScores();
+};
