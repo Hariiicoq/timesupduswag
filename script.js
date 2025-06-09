@@ -117,16 +117,19 @@ function validatePendingWordById(id, found) {
 
     if (found && currentTeam) {
         changeScore(1);
+        foundWordIds.add(wordObj.id);
+
+        // Tentative de suppression Firebase
         db.collection("words").doc(wordObj.id).delete()
             .then(() => {
-                console.log(`Mot supprimé: ${wordObj.word}`);
-                foundWordIds.add(wordObj.id);
+                console.log(`Mot supprimé dans Firebase : ${wordObj.word}`);
             })
             .catch(error => {
-                console.error("Erreur suppression mot:", error);
+                console.error("Erreur suppression Firebase :", error);
             });
     }
 
+    // Retire du tableau pending, même si Firebase échoue
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
