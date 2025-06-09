@@ -23,7 +23,12 @@ let teamScores = {
     Jaune: 0,
     Violet: 0
 };
-let pendingWords = []; // mots à valider
+
+let pendingWords = [
+    { id: '1', word: 'Pomme' },
+    { id: '2', word: 'Chat' },
+    { id: '3', word: 'Ordinateur' }
+];
 
 function selectTeam(teamName) {
     currentTeam = teamName;
@@ -93,20 +98,22 @@ function renderPendingWords() {
     const list = document.getElementById("pendingWords");
     list.innerHTML = "";
 
-    pendingWords.forEach((wordObj, index) => {
+    pendingWords.forEach((wordObj) => {
         const li = document.createElement("li");
         li.innerHTML = `
       ${wordObj.word}
-      <button onclick="validatePendingWord(${index}, true)">✅</button>
-      <button onclick="validatePendingWord(${index}, false)">🔄</button>
+      <button onclick="validatePendingWordById('${wordObj.id}', true)">✅</button>
+      <button onclick="validatePendingWordById('${wordObj.id}', false)">🔄</button>
     `;
         list.appendChild(li);
     });
 }
 
-function validatePendingWord(index, found) {
+function validatePendingWordById(id, found) {
+    const index = pendingWords.findIndex(w => w.id === id);
+    if (index === -1) return; // pas trouvé
+
     const wordObj = pendingWords[index];
-    if (!wordObj) return;
 
     if (found && currentTeam) {
         changeScore(1);
@@ -114,7 +121,7 @@ function validatePendingWord(index, found) {
         foundWordIds.add(wordObj.id);
     }
 
-    // Supprime le mot de la liste à valider (quel que soit le cas)
+    // Suppression du mot de la liste
     pendingWords.splice(index, 1);
     renderPendingWords();
 }
