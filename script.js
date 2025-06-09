@@ -39,11 +39,11 @@ function renderAllScores() {
     const container = document.getElementById("allScores");
     container.innerHTML = `
     <h4>Scores des équipes :</h4>
-    <ul style="list-style: none; padding: 0;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
       ${Object.entries(teamScores)
-            .map(([team, score]) => `<li><strong>${team}:</strong> ${score}</li>`)
+            .map(([team, score]) => `<div><strong>${team}:</strong> ${score}</div>`)
             .join("")}
-    </ul>
+    </div>
   `;
 }
 
@@ -65,21 +65,21 @@ function addWord() {
 }
 
 async function drawWord() {
-    if (currentWord) {
-        // Ajoute le mot en cours à la liste à valider
-        pendingWords.push(currentWord);
-        renderPendingWords();
-    }
-
     const snapshot = await db.collection("words").get();
-    const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    if (words.length > 0) {
-        const random = words[Math.floor(Math.random() * words.length)];
-        currentWord = random;
-        document.getElementById("randomWord").innerText = random.word;
-    } else {
+    const allWords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Filtrer pour ne garder que les mots qui ne sont pas déjà dans pendingWords
+    const pendingIds = new Set(pendingWords.map(w => w.id));
+    const availableWords = allWords.filter(w => !pendingIds.has(w.id));
+
+    if (availableWords.length > 0) {
+        const random = availableWords[Math.floor(Math.random() * availableWords.length)];
+        pendingWords.push(random);
+        renderPendingWords();
+        document.getElementById("randomWord").innerText = ""; // plus de mot en haut
         currentWord = null;
-        document.getElementById("randomWord").innerText = "Plus de mots !";
+    } else {
+        document.getElementById("randomWord").innerText = "Plus de mots disponibles !";
     }
 }
 
