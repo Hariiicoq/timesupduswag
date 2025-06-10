@@ -13,8 +13,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-firebase.firestore().disableNetwork(); // désactive le cache
-firebase.firestore().enableNetwork();  // reforce la connexion live
+
 
 const foundWordIds = new Set();
 let currentWord = null;
@@ -62,21 +61,38 @@ function changeScore(value) {
     updateScoreDisplay();
 }
 
+function showNotification(message, isError = false) {
+    const notif = document.getElementById("notification");
+    notif.innerText = message;
+    notif.className = "notification" + (isError ? " error" : "");
+    notif.classList.add("show");
+    setTimeout(() => notif.classList.remove("show"), 2000);
+}
+
 function addWord() {
     const word = document.getElementById("newWord").value.trim();
     if (word) {
-        db.collection("words").add({ word });
+        db.collection("words").add({ word })
+            .then(() => {
+                document.getElementById("newWord").value = "";
+                showNotification("Mot ajouté !");            // <— appel en cas de succès
+            })
+            .catch(err => {
+                console.error(err);
+                showNotification("Erreur lors de l’ajout", true);  // <— appel en cas d’erreur
+            });
         document.getElementById("newWord").value = "";
     }
 }
 
 async function drawWord() {
+    if (!currentTeam) {
+        alert("Choisis d'abord une équipe !");
+        return;
+    }
     const snapshot = await db.collection("words").get();
     const allWords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
     const pendingIds = new Set(pendingWords.map(w => w.id));
-
-    // Filtrer mots exclus
     const availableWords = allWords.filter(
         w => !pendingIds.has(w.id) && !foundWordIds.has(w.id)
     );
@@ -87,10 +103,21 @@ async function drawWord() {
         renderPendingWords();
         currentWord = random;
         document.getElementById("randomWord").innerText = random.word;
+        // Activer le bouton « Effacer »
+        document.getElementById("clearButton").disabled = false;
     } else {
         document.getElementById("randomWord").innerText = "Plus de mots disponibles !";
         currentWord = null;
+        document.getElementById("clearButton").disabled = true;
     }
+}
+
+function clearWord() {
+    // Cache le mot en gros
+    document.getElementById("randomWord").innerText = "";
+    currentWord = null;
+    // Désactive le bouton tant qu'aucun mot n'est tiré
+    document.getElementById("clearButton").disabled = true;
 }
 
 function renderPendingWords() {
