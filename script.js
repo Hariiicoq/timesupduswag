@@ -11,9 +11,23 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
 firebase.firestore().settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
 
+// Référence au document de la partie pour partager les scores
+const gameDoc = db.collection("games").doc("defaultGame");
+// Crée le document s'il n'existe pas encore
+gameDoc.get().then(doc => {
+    if (!doc.exists) {
+        gameDoc.set({ scores: teamScores });
+    }
+});
+// Écoute en temps réel les changements sur les scores
+gameDoc.onSnapshot(doc => {
+    if (doc.exists && doc.data().scores) {
+        teamScores = doc.data().scores;
+        updateScoreDisplay();
+    }
+});
 
 const foundWordIds = new Set();
 let currentWord = null;
@@ -27,6 +41,7 @@ let teamScores = {
 };
 
 let pendingWords = [];
+const teamsOrder = ['Rouge', 'Bleu', 'Vert', 'Jaune', 'Violet'];
 
 function selectTeam(teamName) {
     currentTeam = teamName;
@@ -42,12 +57,14 @@ function updateScoreDisplay() {
 
 function renderAllScores() {
     const container = document.getElementById("allScores");
+    // On génère l’affichage dans l’ordre défini par teamsOrder
+    const scoresHtml = teamsOrder
+        .map(team => `<div><strong>${team}:</strong> ${teamScores[team] || 0}</div>`)
+        .join("");
     container.innerHTML = `
     <h4>Scores des équipes :</h4>
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-      ${Object.entries(teamScores)
-            .map(([team, score]) => `<div><strong>${team}:</strong> ${score}</div>`)
-            .join("")}
+      ${scoresHtml}
     </div>
   `;
 }
@@ -57,8 +74,11 @@ function changeScore(value) {
         alert("Choisis d'abord une équipe !");
         return;
     }
-    teamScores[currentTeam] = Math.max(0, (teamScores[currentTeam] || 0) + value);
-    updateScoreDisplay();
+    // Met à jour le score dans Firestore (atomiquement)
+    gameDoc.update({[`scores.${currentTeam}`]: firebase.firestore.FieldValue.increment(value)
+    }).catch (err => {
+        console.error("Erreur mise à jour score :", err);
+    });
 }
 
 function showNotification(message, isError = false) {
